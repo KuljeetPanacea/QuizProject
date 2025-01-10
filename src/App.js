@@ -1,55 +1,63 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
+import axios from "axios";
 import {
-  Box,
+  Typography,
   Card,
   CardContent,
-  Typography,
-  Radio,
   RadioGroup,
   FormControlLabel,
-  Button,
-  CircularProgress,
+  Radio,
 } from "@mui/material";
-
-const topicsData = [
-  { id: 1, name: "Governance", completed: false },
-  { id: 2, name: "Materiality Assessment", completed: false },
-  { id: 3, name: "ESG Strategy", completed: false },
-  { id: 4, name: "Climate: GHG", completed: false },
-  { id: 5, name: "People/Social", completed: false },
-  { id: 6, name: "Data, Processes, and Controls", completed: false },
-  { id: 7, name: "Reporting and Disclosure", completed: false },
-];
+import { Box, Button, Snackbar, Alert } from "@mui/material";
 
 function App() {
   const [currentTopic, setCurrentTopic] = useState(0);
-  const [topics, setTopics] = useState(topicsData);
-  const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState({});
-  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState([]);
+  const [questionsData, setQuestionsData] = useState([]);
+  const [openSnackbar, setOpenSnackbar] = useState(false); // State for Snackbar
+  const [snackbarMessage, setSnackbarMessage] = useState("");
 
+  const options = ["Yes", "Not Sure", "No"];
+  const scoreMapping = {
+    Yes: 5,
+    "Not Sure": 2,
+    No: 0,
+  };
   useEffect(() => {
-    fetchQuestions(topics[currentTopic].id);
-  }, [currentTopic]);
+    const fetchData = async () => {
+      try {
+        const response = await axios.get("http://localhost:3000/api/category");
+        setData(response.data);
 
-  const fetchQuestions = async (topicId) => {
-    setLoading(true);
+        if (response.data.length > 0) {
+          fetchTopicData(response.data[0].id);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const fetchTopicData = async (topicId) => {
     try {
-      const response = await fetch(`/api/questions?topic=${topicId}`);
-      const data = await response.json();
-      setQuestions(data);
+      const response = await axios.get(
+        `http://localhost:3000/api/category/${topicId}`
+      );
+      setQuestionsData(response.data);
+      console.log("setQuestionsData", response.data);
     } catch (error) {
-      console.error("Failed to fetch questions:", error);
-    } finally {
-      setLoading(false);
+      console.error("Error fetching data:", error);
     }
   };
 
   const handleTopicSelect = (index) => {
     setCurrentTopic(index);
-    setAnswers({}); // Reset answers when switching topics
+    const selectedTopicId = data[index].id;
+    fetchTopicData(selectedTopicId);
   };
 
   const handleOptionChange = (questionIndex, value) => {
@@ -59,42 +67,62 @@ function App() {
     }));
   };
 
-  const handleSubmit = () => {
-    const allAnswered = questions.every(
-      (question, index) => answers[index] !== undefined
-    );
+  const handleSubmit = async () => {
+    // Build the payload to send in the required format
+    const answersPayload = questionsData.map((question, index) => {
+      return {
+        questionId: question.id, // Assuming each question has a unique 'id'
+        score: scoreMapping[answers[index]] || 0, // Set score based on the option selected
+      };
+    });
 
-    if (allAnswered) {
-      const updatedTopics = [...topics];
-      updatedTopics[currentTopic].completed = true;
-      setTopics(updatedTopics);
-      setAnswers({});
-      alert(`You have completed the topic: ${topics[currentTopic].name}`);
-    } else {
-      alert("Please answer all questions before submitting.");
+    try {
+      const response = await axios.post(
+        "http://localhost:3000/api/category/save-answers",
+        {
+          answers: answersPayload,
+        }
+      );
+      console.log("Response from API:", response.data);
+      setSnackbarMessage("Your answers have been submitted!");
+      setOpenSnackbar(true);
+      // Reset answers and topics after successful submission
+      // setAnswers({});
+      // const updatedTopics = [...topics];
+      // // updatedTopics[currentTopic].completed = true;
+      // setTopics(updatedTopics);
+    } catch (error) {
+      console.error("Error submitting answers:", error);
+      alert("Error submitting answers. Please try again.");
     }
   };
 
   return (
     <div style={{ height: "100vh" }}>
       <Header />
-      <div style={{ display: "flex" }}>
+      <div style={{ display: "flex", height: "100%" }}>
+        {/* Sidebar */}
         <Sidebar
-          topics={topics}
+          topics={data}
           currentTopic={currentTopic}
           onSelectTopic={handleTopicSelect}
         />
-        <div style={{ flex: 1, padding: "20px", overflowY: "auto" }}>
-          <h1>{topics[currentTopic].name}</h1>
-          {loading ? (
-            <CircularProgress />
-          ) : (
-            <Box sx={{ padding: 2 }}>
-              {questions.map((question, index) => (
+        {/* Content */}
+        <div
+          style={{
+            flex: 1,
+            padding: "20px",
+            overflowY: "auto",
+            maxHeight: "calc(100vh - 64px)",
+          }}
+        >
+          <Box sx={{ padding: 2 }}>
+            {questionsData.length > 0 ? (
+              questionsData.map((question, index) => (
                 <Card key={index} sx={{ marginBottom: 2, padding: 2 }}>
                   <CardContent>
-                    <Typography variant="h6" sx={{ marginBottom: 2 }}>
-                      {index + 1}. {question.question}
+                    <Typography sx={{ marginBottom: 2 }}>
+                      {index + 1}. {question.text}
                     </Typography>
                     <RadioGroup
                       value={answers[index] || ""}
@@ -103,7 +131,7 @@ function App() {
                       }
                       sx={{ display: "flex", flexDirection: "row", gap: 2 }}
                     >
-                      {question.options.map((option, idx) => (
+                      {options.map((option, idx) => (
                         <FormControlLabel
                           key={idx}
                           value={option}
@@ -114,19 +142,34 @@ function App() {
                     </RadioGroup>
                   </CardContent>
                 </Card>
-              ))}
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleSubmit}
-                sx={{ marginTop: 2 }}
-              >
-                Submit
-              </Button>
-            </Box>
-          )}
+              ))
+            ) : (
+              <Typography>No questions available for this topic.</Typography>
+            )}
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleSubmit}
+              sx={{ marginTop: 2 }}
+            >
+              Submit
+            </Button>
+          </Box>
         </div>
       </div>
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={3000} // Automatically close after 3 seconds
+        onClose={() => setOpenSnackbar(false)} // Close Snackbar when done
+      >
+        <Alert
+          onClose={() => setOpenSnackbar(false)}
+          severity={snackbarMessage.includes("Error") ? "error" : "success"}
+          sx={{ width: "100%" }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </div>
   );
 }
