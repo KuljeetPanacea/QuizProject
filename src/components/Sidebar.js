@@ -18,7 +18,7 @@ export default function Sidebar({ topics, currentTopic, onSelectTopic }) {
               {topic.completed ? (
                 <Typography variant="body2" color="green">✓ {topic.name}</Typography>
               ) : (
-                <Typography variant="body2">{index + 1}. {topic.name}</Typography>
+                <Typography variant="body2">{topic.name}</Typography>
               )}
             </StepLabel>
           </Step>
