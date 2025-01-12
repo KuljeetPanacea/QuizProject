@@ -6,8 +6,15 @@ import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import MenuIcon from "@mui/icons-material/Menu";
-
+import axios from "axios";
 function Header() {
+  const deleteAllAnswers = async () => {
+    try {
+      await axios.delete("http://13.233.196.139:3000/api/category/delete");
+    } catch (error) {
+      console.error("Error deleting data:", error);
+    }
+  };
   return (
     <Box sx={{ flexGrow: 1 }}>
       <AppBar position="static">
@@ -22,9 +29,11 @@ function Header() {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            News
+            ESG SelfAssess™
           </Typography>
-          <Button color="inherit">Login</Button>
+          <Button color="inherit" onClick={() => deleteAllAnswers()}>
+            Retake
+          </Button>
         </Toolbar>
       </AppBar>
     </Box>

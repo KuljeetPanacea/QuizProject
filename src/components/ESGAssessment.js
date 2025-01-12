@@ -1,5 +1,10 @@
 import React, { useEffect, useState } from "react";
+
 import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
   RadarChart,
   PolarGrid,
   PolarAngleAxis,
@@ -7,7 +12,6 @@ import {
   Radar,
   Legend,
 } from "recharts";
-import { PieChart, Pie, Cell, Tooltip } from "recharts";
 import {
   Card,
   CardContent,
@@ -20,16 +24,18 @@ import {
 import axios from "axios";
 
 const ESGAssessment = () => {
-  const [activeHeading, setActiveHeading] = useState("Governance"); // State to track active heading
+  const [activeHeading, setActiveHeading] = useState("Governance");
   const [totalScore, setTotalScore] = useState(null);
   const [totalQuestions, setTotalQuestions] = useState(null);
+  const [categoryScore, setCategoryScore] = useState([]);
+
   useEffect(() => {
     const fetchTotalScore = async () => {
       const response = await axios.get(
-        "http://localhost:3000/api/results/scores"
+        "http://13.233.196.139:3000/api/results/scores"
       );
       const totalQuestions = await axios.get(
-        "http://localhost:3000/api/category/questions/total"
+        "http://13.233.196.139:3000/api/category/questions/total"
       );
       setTotalQuestions(totalQuestions.data.totalQuestions);
       setTotalScore(response.data.totalScore);
@@ -37,28 +43,39 @@ const ESGAssessment = () => {
     fetchTotalScore();
   }, []);
 
-  const radarData = [
-    { subject: "Governance", value: 80, fullMark: 100 },
-    { subject: "Materiality Assessment", value: 70, fullMark: 100 },
-    { subject: "ESG Strategy", value: 85, fullMark: 100 },
-    { subject: "Climate GHG", value: 75, fullMark: 100 },
-    { subject: "People/Social", value: 90, fullMark: 100 },
-    { subject: "Data", value: 60, fullMark: 100 },
-    { subject: "Processes", value: 80, fullMark: 100 },
-    { subject: "Reporting and D", value: 70, fullMark: 100 },
-    { subject: "Technology", value: 85, fullMark: 100 },
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        await axios.get("http://13.233.196.139:3000/api/category");
+        const catScore = await axios.get(
+          `http://13.233.196.139:3000/api/results/categories/scores`
+        );
+        setCategoryScore(catScore.data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const radarData = categoryScore.map((item) => ({
+    subject: item.categoryName, // Rename 'data' to 'category'
+    value: item.score,
+    fullMark: 100, // Keep the 'value' field
+  }));
 
   const pieData = [
     {
       name: "GHG Emissions",
-      value: Math.floor(Math.min((totalScore / (totalQuestions*5))  * 100, 100)),
+      value: Math.floor(
+        Math.min((totalScore / (totalQuestions * 5)) * 100, 100)
+      ),
     },
     {
       name: "Other Factors",
       value:
         100 -
-        Math.floor(Math.min((totalScore / (totalQuestions*5))  * 100, 100)),
+        Math.floor(Math.min((totalScore / (totalQuestions * 5)) * 100, 100)),
     },
   ];
 
@@ -356,7 +373,7 @@ const ESGAssessment = () => {
                 <RadarChart
                   cx={150}
                   cy={150}
-                  outerRadius={80}
+                  outerRadius={90}
                   width={300}
                   height={300}
                   data={radarData}
