@@ -32,10 +32,10 @@ const ESGAssessment = () => {
   useEffect(() => {
     const fetchTotalScore = async () => {
       const response = await axios.get(
-        "http://13.233.196.139:3000/api/results/scores"
+        `${process.env.REACT_APP_URL}/api/results/scores`
       );
       const totalQuestions = await axios.get(
-        "http://13.233.196.139:3000/api/category/questions/total"
+        `${process.env.REACT_APP_URL}/api/category/questions/total`
       );
       setTotalQuestions(totalQuestions.data.totalQuestions);
       setTotalScore(response.data.totalScore);
@@ -46,9 +46,9 @@ const ESGAssessment = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        await axios.get("http://13.233.196.139:3000/api/category");
+        await axios.get(`${process.env.REACT_APP_URL}/api/category`);
         const catScore = await axios.get(
-          `http://13.233.196.139:3000/api/results/categories/scores`
+          `${process.env.REACT_APP_URL}/api/results/categories/scores`
         );
         setCategoryScore(catScore.data);
       } catch (error) {

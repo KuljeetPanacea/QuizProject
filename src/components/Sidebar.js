@@ -3,9 +3,9 @@ import Box from '@mui/material/Box';
 import Stepper from '@mui/material/Stepper';
 import Step from '@mui/material/Step';
 import StepLabel from '@mui/material/StepLabel';
-import { Typography } from '@mui/material';
+import { Typography, Button } from '@mui/material';
  
-export default function Sidebar({ topics, currentTopic, onSelectTopic }) {
+export default function Sidebar({ topics, currentTopic, onSelectTopic, onRunCalculator}) {
  
   return (
     <Box sx={{ 
@@ -34,6 +34,23 @@ export default function Sidebar({ topics, currentTopic, onSelectTopic }) {
           </Step>
         ))}
       </Stepper>
+      <Box
+  sx={{
+    position: "fixed",
+    bottom: 20, // Adjust the distance from the bottom
+    transform: "translateX(15%)",
+    textAlign: "center",
+  }}
+>
+  <Button
+    variant="contained"
+    color="primary"
+    onClick={onRunCalculator} // Call the parent function
+  >
+    Run Calculator
+  </Button>
+</Box>
+
     </Box>
   );
 }

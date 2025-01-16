@@ -20,6 +20,8 @@ import {
   DialogContentText,
   DialogTitle,
 } from "@mui/material";
+import CalculatorComponent from "./CalculatorView";
+
 // import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
 const AssessmentComponent = () => {
   const navigate = useNavigate();
@@ -30,14 +32,17 @@ const AssessmentComponent = () => {
   const [questionsData, setQuestionsData] = useState([]);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [showCalculator, setShowCalculator] = useState(false)
   const options = ["Yes", "Not Sure", "No"];
   const scores = { Yes: 5, "Not Sure": 2, No: 0 };
+ 
+  // require('dotenv').config();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await axios.get(
-          "http://13.233.196.139:3000/api/category"
+          `${process.env.REACT_APP_URL}/api/category`
         );
         setData(response.data);
         if (response.data.length > 0) {
@@ -53,7 +58,7 @@ const AssessmentComponent = () => {
   const fetchTopicData = async (topicId) => {
     try {
       const response = await axios.get(
-        `http://13.233.196.139:3000/api/category/${topicId}`
+        `${process.env.REACT_APP_URL}/api/category/${topicId}`
       );
       setQuestionsData(response.data);
     } catch (error) {
@@ -110,7 +115,7 @@ const AssessmentComponent = () => {
     }));
 
     try {
-      await axios.post("http://13.233.196.139:3000/api/category/save-answers", {
+      await axios.post(`${process.env.REACT_APP_URL}/api/category/save-answers`, {
         answers: answersPayload,
       });
       setSnackbarMessage("Your answers have been submitted successfully!");
@@ -133,6 +138,15 @@ const AssessmentComponent = () => {
       setIsModalOpen(true);
     }
   };
+
+  const handleRunCalculator = () => {
+    setShowCalculator(true); // Show the calculator when clicked
+  };
+ 
+  const handleBackToQuestions = () => {
+    setShowCalculator(false); // Hide the calculator and show the questions again
+  };
+
   return (
     <div>
       <Header />
@@ -142,6 +156,7 @@ const AssessmentComponent = () => {
           topics={data}
           currentTopic={currentTopic}
           onSelectTopic={handleTopicSelect}
+          onRunCalculator={handleRunCalculator}
         />
 
         {/* Content */}
@@ -155,6 +170,9 @@ const AssessmentComponent = () => {
             maxHeight: "100vh",
           }}
         >
+          {showCalculator ? (
+            <CalculatorComponent onBack={handleBackToQuestions} />
+          ) : (
           <Box sx={{ flex: 1, overflowY: "auto", marginBottom: "64px" }}>
             {questionsData.map((question, index) => (
               <Card key={index} sx={{ marginBottom: 2, padding: 2 }}>
@@ -180,8 +198,12 @@ const AssessmentComponent = () => {
               </Card>
             ))}
           </Box>
+          )}
+
+
 
           {/* Fixed Buttons */}
+          {!showCalculator && (
           <Box
             sx={{
               position: "fixed",
@@ -241,6 +263,7 @@ const AssessmentComponent = () => {
               </Dialog>
             </Box>
           </Box>
+          )}
 
           {/* Snackbar */}
           <Snackbar

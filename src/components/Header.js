@@ -10,7 +10,7 @@ import axios from "axios";
 function Header() {
   const deleteAllAnswers = async () => {
     try {
-      await axios.delete("http://13.233.196.139:3000/api/category/delete");
+      await axios.delete(`${process.env.URL}/api/category/delete`);
     } catch (error) {
       console.error("Error deleting data:", error);
     }
@@ -29,7 +29,7 @@ function Header() {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            ESG SelfAssess™
+            SelfAssess™
           </Typography>
           <Button color="inherit" onClick={() => deleteAllAnswers()}>
             Retake
