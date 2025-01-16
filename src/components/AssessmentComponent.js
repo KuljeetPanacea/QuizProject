@@ -36,7 +36,6 @@ const AssessmentComponent = () => {
   const options = ["Yes", "Not Sure", "No"];
   const scores = { Yes: 5, "Not Sure": 2, No: 0 };
  
-  // require('dotenv').config();
 
   useEffect(() => {
     const fetchData = async () => {
